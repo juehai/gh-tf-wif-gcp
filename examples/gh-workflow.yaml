@@ -1,0 +1,39 @@
+name: "Google Cloud Auth"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  google-cloud-auth:
+    name: Workload Identity Federation
+    runs-on: ubuntu-latest
+
+    # Add "id-token" for Google Authentication
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: 🛎️ Checkout
+        uses: actions/checkout@v4
+      
+      # Configure Workload Identity Federation via a credentials file.
+      - id: auth
+        name: 🔐 Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/github-com/providers/github-com-oidc' # TO REPLACE
+          service_account: 'github-actions@wif-demo.iam.gserviceaccount.com' # TO REPLACE
+          #token_format: 'access_token' # uncomment to troubleshoot "permission denied" errors
+          create_credentials_file: true
+          export_environment_variables: true
+      # Install gcloud, `setup-gcloud` automatically picks up authentication from `auth`.
+      - name: '🔧 Set up Google Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+      # Now you can run gcloud commands authenticated as the impersonated service account.
+
+      - id: 'gcloud'
+        name: 📥 Google Cloud CLI
+        run: |
+          gcloud config list
+          gcloud storage cat gs://demo/test.txt
